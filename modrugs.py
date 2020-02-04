@@ -113,7 +113,7 @@ def extract_text(soup, content_box=True):
     return content
 
 def extract_reviews(soup):
-    def get_comments(soup, reviews):
+    def get_comments(soup, reviews, condition):
         comments = soup.find_all('div', 'ddc-comment')
         for comment in comments: 
             review = {
@@ -137,7 +137,7 @@ def extract_reviews(soup):
     reviews = {}
     conditions = soup.find('table', 'data-list')
     if conditions is None:
-        get_comments(soup, reviews)
+        get_comments(soup, reviews, 'reviews')
     else:
         condition_pages = conditions.find_all('a', string=re.compile('[0-9]* review'))
         conditions = read_html(str(conditions))[0]['Condition'][:-1]
@@ -152,7 +152,7 @@ def extract_reviews(soup):
                     # print('page end at ', page)
                     break
                 else:
-                    get_comments(soup, reviews)
+                    get_comments(soup, reviews, condition)
         
                 page+=1
     return reviews
