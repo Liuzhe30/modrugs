@@ -35,7 +35,7 @@ def extract_side_meta(soup):
         if section is not None:
             title = txt(section.find('div', 'sideBoxTitle'))
             vals = list(map(txt, section.find_all('a')))
-            print(vals)
+            # print(vals)
             sidebar_meta.update({title:vals})
     ratings = sidebar.find('div', 'drug-rating')
     try:
