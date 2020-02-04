@@ -196,9 +196,9 @@ while True:
                     continue
                 else:
                     goto = None
-            if drug in done:
-                # print('skipping', drug)
-                continue
+            # if drug in done:
+            #     # print('skipping', drug)
+            #     continue
             # print('Scraping', drug, '...') # stdout log?
             try:
                 os.mkdir(f'data/{drug}')
