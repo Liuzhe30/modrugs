@@ -113,41 +113,48 @@ def extract_text(soup, content_box=True):
     return content
 
 def extract_reviews(soup):
-    conditions = soup.find('table', 'data-list')
-    condition_pages = conditions.find_all('a', string=re.compile('[0-9]* review'))
-    conditions = read_html(str(conditions))[0]['Condition'][:-1]
+    def get_comments(soup, reviews):
+        comments = soup.find_all('div', 'ddc-comment')
+        for comment in comments: 
+            review = {
+                'user'              : comment.find('span', 'user-name'),
+                'time_on_medication': comment.find('span', 'text-color-muted', string=re.compile('Taken for')),
+                'comment_date'      : comment.find('span', 'comment-date'),
+                'content'           : comment.find('p', 'ddc-comment-content'),
+                'rating'            : comment.find('div', 'rating-score')
+            }
+            try:
+                isthere = reviews[condition]
+            except KeyError:
+                reviews[condition] = []
+            finally:
+                for key in review:
+                    try:
+                        review[key] = txt(review[key])
+                    except AttributeError:
+                        review[key] = ''
+                reviews[condition].append(review)
     reviews = {}
-    for i, condition in enumerate(conditions):
-        page = 1
-        while True:
-            page_link = url(condition_pages[i]['href'] + f'?page={page}')
-            r = requests.get(page_link)
-            soup = bs4.BeautifulSoup(r.content, 'lxml')
-            # print(page, ''.join(re.findall('[0-9]', soup.find('h1').text)))
-            if page > 1 and ''.join(re.findall('[0-9]', soup.find('h1').text)) != str(page):
-                # print('page end at ', page)
-                break
-            comments = soup.find_all('div', 'ddc-comment')
-            for comment in comments: 
-                review = {
-                    'user'              : comment.find('span', 'user-name'),
-                    'time_on_medication': comment.find('span', 'text-color-muted', string=re.compile('Taken for')),
-                    'comment_date'      : comment.find('span', 'comment-date'),
-                    'content'           : comment.find('p', 'ddc-comment-content'),
-                    'rating'            : comment.find('div', 'rating-score')
-                }
-                try:
-                    isthere = reviews[condition]
-                except KeyError:
-                    reviews[condition] = []
-                finally:
-                    for key in review:
-                        try:
-                            review[key] = txt(review[key])
-                        except AttributeError:
-                            review[key] = ''
-                    reviews[condition].append(review)
-            page+=1
+    conditions = soup.find('table', 'data-list')
+    if conditions is None:
+        get_comments(soup, reviews)
+    else:
+        condition_pages = conditions.find_all('a', string=re.compile('[0-9]* review'))
+        conditions = read_html(str(conditions))[0]['Condition'][:-1]
+        for i, condition in enumerate(conditions):
+            page = 1
+            while True:
+                page_link = url(condition_pages[i]['href'] + f'?page={page}')
+                r = requests.get(page_link)
+                soup = bs4.BeautifulSoup(r.content, 'lxml')
+                # print(page, ''.join(re.findall('[0-9]', soup.find('h1').text)))
+                if page > 1 and ''.join(re.findall('[0-9]', soup.find('h1').text)) != str(page):
+                    # print('page end at ', page)
+                    break
+                else:
+                    get_comments(soup, reviews)
+        
+                page+=1
     return reviews
 
 
