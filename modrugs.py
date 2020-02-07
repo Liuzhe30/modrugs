@@ -229,7 +229,8 @@ while True:
                 pass
     
             r = requests.get(url(link))
-    
+            soup = bs4.BeautifulSoup(r.content, 'lxml')
+
             #  metadata
             with open(f'data/{drug}/{drug}_meta.json', 'w') as f:
                 content = extract_metadata(soup)
@@ -237,7 +238,7 @@ while True:
                 json.dump(content, f, indent=2)
             
             #  metadata
-            soup = bs4.BeautifulSoup(r.content, 'lxml')
+            
             img_link = soup.find('div', 'drugImageHolder').img['data-src']
 
             with open(f'data/{drug}/{drug}_meta.json', 'r') as f:
@@ -251,15 +252,15 @@ while True:
             #     content = extract_text(soup)
             #     json.dump(content, f, indent=5)
 
-            # tabs_ul = soup.find('ul', 'nav-tabs nav-tabs-collapse vmig')
-            # if tabs_ul is not None:
-            #     links = {
-            #         'sfx'       : tabs_ul.find('a', text='Side Effects'),
-            #         'dose'      : tabs_ul.find('a', text='Dosage'),
-            #         'pro'       : tabs_ul.find('a', text='Professional'),
-            #         'inter'     : tabs_ul.find('a', text='Interactions'),
-            #         'reviews'   : soup.find('p', 'user-reviews-title').find('a')
-            #     }
+            tabs_ul = soup.find('ul', 'nav-tabs nav-tabs-collapse vmig')
+            if tabs_ul is not None:
+                links = {
+                    'sfx'       : tabs_ul.find('a', text='Side Effects'),
+                    'dose'      : tabs_ul.find('a', text='Dosage'),
+                    'pro'       : tabs_ul.find('a', text='Professional'),
+                    'inter'     : tabs_ul.find('a', text='Interactions'),
+                    'reviews'   : soup.find('p', 'user-reviews-title').find('a')
+                }
                 # # sideffects page
                 # if links['sfx'] is not None:
                 #     r = requests.get(url(links['sfx']['href']))
@@ -301,10 +302,9 @@ while True:
                 #     with open(f'data/{drug}/{drug}_reviews.json', 'w') as f:
                 #         content = extract_reviews(soup)
                 #         json.dump(content, f, indent=4)
-            break
-        break
-            # with open('pickles.txt', 'w', encoding='utf-8') as f:
-            #     f.write(last)
+
+            with open('pickles.txt', 'w', encoding='utf-8') as f:
+                f.write(last)
             # # time.sleep(2) # god mode off
     except (TimeoutError, ConnectionError):
             print('BOT KILL, CONNECTION SEVERED')
