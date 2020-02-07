@@ -230,11 +230,11 @@ while True:
     
             r = requests.get(url(link))
     
-            # #  metadata
-            # with open(f'data/{drug}/{drug}_meta.json', 'w') as f:
-            #     content = extract_metadata(soup)
-            #     content.update(extract_side_meta(soup))
-            #     json.dump(content, f, indent=2)
+            #  metadata
+            with open(f'data/{drug}/{drug}_meta.json', 'w') as f:
+                content = extract_metadata(soup)
+                content.update(extract_side_meta(soup))
+                json.dump(content, f, indent=2)
             
             #  metadata
             soup = bs4.BeautifulSoup(r.content, 'lxml')
@@ -286,13 +286,13 @@ while True:
                 #             content.update(extract_text(div, content_box=False))
                 #         json.dump(content, f, indent=5)
 
-                # # interactions page
-                # if links['inter'] is not None:
-                #     r = requests.get(url(links['inter']['href']))
-                #     soup = bs4.BeautifulSoup(r.content, 'lxml') 
-                #     with open(f'data/{drug}/{drug}_inter.json', 'w') as f:
-                #         content = extract_inter(soup)
-                #         json.dump(content, f, indent=4)
+                # interactions page
+                if links['inter'] is not None:
+                    r = requests.get(url(links['inter']['href']))
+                    soup = bs4.BeautifulSoup(r.content, 'lxml') 
+                    with open(f'data/{drug}/{drug}_inter.json', 'w') as f:
+                        content = extract_inter(soup)
+                        json.dump(content, f, indent=4)
 
                 # # reviews 
                 # if links['reviews'] is not None:
