@@ -12,6 +12,8 @@ from pprint import pprint
 # from functools import reduce
 #%%
 txt = lambda elem: elem.text.replace('\n', '').strip()
+url = lambda link : f'https://www.drugs.com{link}'
+
 
 def extract_metadata(soup):
     content = soup.find('div', 'contentBox')
@@ -25,6 +27,29 @@ def extract_metadata(soup):
     sub = [i.strip() for i in sub.split('<key>') if i != '']
     return dict(zip(keys, sub))
 
+def extract_inter(soup):
+    inter = {}
+    for li in soup.find('div', 'nav-tabs-secondary').find('ul').find_all('li'):
+        link = li.find('a')['href']
+        key = txt(li.find('a'))
+        category = re.findall('[A-Za-z\/?\s]+', key)[0].strip()
+        inter[category] = {
+            '#' : int(re.findall('[0-9]+', key)[0]), 
+            'content' : []
+        }
+        inter_page = bs4.BeautifulSoup(requests.get(url(link)).content, 'lxml')
+        if category == 'Drug Interactions':
+            for li in inter_page.find('ul', 'interactions interactions-label ddc-list-unstyled').find_all('li'):
+                inter[category]['content'].append(txt(li))
+        else:
+            for div in inter_page.find_all('div', 'interactions-reference'):
+                interaction = {}
+                interaction['level'] = txt(div.div.span)
+                interaction['title'] = txt(div.div.h3)
+                interaction['sub_title'] = txt(div.div.p)
+                interaction['body'] = txt(div.find_all('p')[1])
+                inter[category]['content'].append(interaction)
+    return inter
 
 def extract_side_meta(soup):
     sidebar_meta = {}
@@ -157,7 +182,6 @@ def extract_reviews(soup):
                 page+=1
     return reviews
 
-
 #%%
 # overview_url  = lambda drug : f'https://www.drugs.com/mtm/{str(drug)}.html'
 # monograph_url = lambda drug : f'https://www.drugs.com/monograph/{str(drug)}.html'
@@ -166,8 +190,6 @@ def extract_reviews(soup):
 # professional_url_1 = lambda drug : f'https://www.drugs.com/ppa/{str(drug)}.html'
 # interactions_url = lambda drug : f'https://www.drugs.com/drug-interactions/{str(drug)}.html'
 # dosage_url = lambda drug : f'https://www.drugs.com/dosage/{str(drug)}.html'
-
-url = lambda link : f'https://www.drugs.com{link}'
 
 done = os.listdir('data/')
 print(len(done), 'drugs already scraped')
@@ -208,16 +230,16 @@ while True:
             r = requests.get(url(link))
             soup = bs4.BeautifulSoup(r.content, 'lxml')
 
-            #  metadata
-            with open(f'data/{drug}/{drug}_meta.json', 'w') as f:
-                content = extract_metadata(soup)
-                content.update(extract_side_meta(soup))
-                json.dump(content, f, indent=2)
+            # #  metadata
+            # with open(f'data/{drug}/{drug}_meta.json', 'w') as f:
+            #     content = extract_metadata(soup)
+            #     content.update(extract_side_meta(soup))
+            #     json.dump(content, f, indent=2)
             
-            # overview text
-            with open(f'data/{drug}/{drug}.json', 'w') as f:
-                content = extract_text(soup)
-                json.dump(content, f, indent=5)
+            # # overview text
+            # with open(f'data/{drug}/{drug}.json', 'w') as f:
+            #     content = extract_text(soup)
+            #     json.dump(content, f, indent=5)
 
             tabs_ul = soup.find('ul', 'nav-tabs nav-tabs-collapse vmig')
             if tabs_ul is not None:
@@ -228,51 +250,50 @@ while True:
                     'inter'     : tabs_ul.find('a', text='Interactions'),
                     'reviews'   : soup.find('p', 'user-reviews-title').find('a')
                 }
-                # sideffects page
-                if links['sfx'] is not None:
-                    r = requests.get(url(links['sfx']['href']))
-                    soup = bs4.BeautifulSoup(r.content, 'lxml')
-                    with open(f'data/{drug}/{drug}_sfx.json', 'w') as f:
-                        content = extract_text(soup)
-                        json.dump(content, f, indent=5)
+                # # sideffects page
+                # if links['sfx'] is not None:
+                #     r = requests.get(url(links['sfx']['href']))
+                #     soup = bs4.BeautifulSoup(r.content, 'lxml')
+                #     with open(f'data/{drug}/{drug}_sfx.json', 'w') as f:
+                #         content = extract_text(soup)
+                #         json.dump(content, f, indent=5)
                 
-                # professional page
-                if links['pro'] is not None:
-                    r = requests.get(url(links['pro']['href']))
-                    soup = bs4.BeautifulSoup(r.content, 'lxml') 
-                    with open(f'data/{drug}/{drug}_pro.json', 'w') as f:
-                        content = extract_text(soup)
-                        json.dump(content, f, indent=5)
+                # # professional page
+                # if links['pro'] is not None:
+                #     r = requests.get(url(links['pro']['href']))
+                #     soup = bs4.BeautifulSoup(r.content, 'lxml') 
+                #     with open(f'data/{drug}/{drug}_pro.json', 'w') as f:
+                #         content = extract_text(soup)
+                #         json.dump(content, f, indent=5)
                     
-                # dosage page
-                if  links['dose'] is not None:
-                    r = requests.get(url(links['dose']['href']))
-                    soup = bs4.BeautifulSoup(r.content, 'lxml') 
-                    with open(f'data/{drug}/{drug}_dose.json', 'w') as f:
-                        content = {}
-                        for div in soup.find_all('div', 'Section'):
-                            content.update(extract_text(div, content_box=False))
-                        json.dump(content, f, indent=5)
+                # # dosage page
+                # if  links['dose'] is not None:
+                #     r = requests.get(url(links['dose']['href']))
+                #     soup = bs4.BeautifulSoup(r.content, 'lxml') 
+                #     with open(f'data/{drug}/{drug}_dose.json', 'w') as f:
+                #         content = {}
+                #         for div in soup.find_all('div', 'Section'):
+                #             content.update(extract_text(div, content_box=False))
+                #         json.dump(content, f, indent=5)
 
                 # interactions page
                 if links['inter'] is not None:
                     r = requests.get(url(links['inter']['href']))
                     soup = bs4.BeautifulSoup(r.content, 'lxml') 
                     with open(f'data/{drug}/{drug}_inter.json', 'w') as f:
-                        content = extract_text(soup)
+                        content = extract_inter(soup)
                         json.dump(content, f, indent=5)
 
-                # reviews 
-                if links['reviews'] is not None:
-                    r = requests.get(url(links['reviews']['href']))
-                    soup = bs4.BeautifulSoup(r.content, 'lxml')
-                    with open(f'data/{drug}/{drug}_reviews.json', 'w') as f:
-                        content = extract_reviews(soup)
-                        json.dump(content, f, indent=4)
+                # # reviews 
+                # if links['reviews'] is not None:
+                #     r = requests.get(url(links['reviews']['href']))
+                #     soup = bs4.BeautifulSoup(r.content, 'lxml')
+                #     with open(f'data/{drug}/{drug}_reviews.json', 'w') as f:
+                #         content = extract_reviews(soup)
+                #         json.dump(content, f, indent=4)
         
             with open('pickles.txt', 'w', encoding='utf-8') as f:
                 f.write(last)
-        
             # time.sleep(2) # god mode off
     except (TimeoutError, ConnectionError):
             print('BOT KILL, CONNECTION SEVERED')
@@ -282,5 +303,8 @@ while True:
             continue
     except KeyboardInterrupt:
         break
-    break       
+    break
 print('total time taken', round((time.time() - t1) / 60, 2))
+
+
+# %%
