@@ -71,7 +71,7 @@ def extract_side_meta(soup):
     except AttributeError:
         pass
     try:
-        sidebar_meta['img'] = sidebar.find('div', 'drugImageHolder').img['data-src']
+        sidebar_meta['img'] = sidebar.find('div', 'drugImageHolder').find('img')['data-src']
     except AttributeError:
         pass
     return sidebar_meta
@@ -237,15 +237,6 @@ while True:
                 content.update(extract_side_meta(soup))
                 json.dump(content, f, indent=2)
             
-            #  metadata
-            
-            img_link = soup.find('div', 'drugImageHolder').img['data-src']
-
-            with open(f'data/{drug}/{drug}_meta.json', 'r') as f:
-                content = json.load(f)
-            with open(f'data/{drug}/{drug}_meta.json', 'w') as f:
-                content['img'] = url(link)
-                json.dump(content, f, indent=2)
             
             # # overview text
             # with open(f'data/{drug}/{drug}.json', 'w') as f:
