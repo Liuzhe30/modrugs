@@ -29,27 +29,30 @@ def extract_metadata(soup):
 
 def extract_inter(soup):
     inter = {}
-    for li in soup.find('div', 'nav-tabs-secondary').find('ul').find_all('li'):
-        link = li.find('a')['href']
-        key = txt(li.find('a'))
-        category = re.findall('[A-Za-z\/?\s]+', key)[0].strip()
-        inter[category] = {
-            '#' : int(re.findall('[0-9]+', key)[0]), 
-            'content' : []
-        }
-        inter_page = bs4.BeautifulSoup(requests.get(url(link)).content, 'lxml')
-        if category == 'Drug Interactions':
-            for li in inter_page.find('ul', 'interactions interactions-label ddc-list-unstyled').find_all('li'):
-                inter[category]['content'].append(txt(li))
-        else:
-            for div in inter_page.find_all('div', 'interactions-reference'):
-                interaction = {}
-                interaction['level'] = txt(div.div.span)
-                interaction['title'] = txt(div.div.h3)
-                interaction['sub_title'] = txt(div.div.p)
-                interaction['body'] = txt(div.find_all('p')[1])
-                inter[category]['content'].append(interaction)
-    return inter
+    try:
+        for li in soup.find('div', 'nav-tabs-secondary').find('ul').find_all('li'):
+            link = li.find('a')['href']
+            key = txt(li.find('a'))
+            category = re.findall('[A-Za-z\/?\s]+', key)[0].strip()
+            inter[category] = {
+                '#' : int(re.findall('[0-9]+', key)[0]), 
+                'content' : []
+            }
+            inter_page = bs4.BeautifulSoup(requests.get(url(link)).content, 'lxml')
+            if category == 'Drug Interactions':
+                for li in inter_page.find('ul', 'interactions interactions-label ddc-list-unstyled').find_all('li'):
+                    inter[category]['content'].append(txt(li))
+            else:
+                for div in inter_page.find_all('div', 'interactions-reference'):
+                    interaction = {}
+                    interaction['level'] = txt(div.div.span)
+                    interaction['title'] = txt(div.div.h3)
+                    interaction['sub_title'] = txt(div.div.p)
+                    interaction['body'] = txt(div.find_all('p')[1])
+                    inter[category]['content'].append(interaction)
+            return inter
+    except AttributeError:
+        return {}
 
 def extract_side_meta(soup):
     sidebar_meta = {}
