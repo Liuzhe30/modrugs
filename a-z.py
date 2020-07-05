@@ -38,7 +38,7 @@ for by in alpha:
         print(by, r.status_code)
     
 with open('alpha.json', 'w') as f:
-    json.dump(drugs, f)
+    json.dump(drugs, f, indent = 4)
 
 #%%
 with open('alpha.json', 'r') as f:
