@@ -32,6 +32,8 @@ def extract_inter(soup):
     try:
         for li in soup.find('div', 'nav-tabs-secondary').find('ul').find_all('li'):
             link = li.find('a')['href']
+            #print(link)
+            #print(link[:-5] + '-index' + link[-5:])
             key = txt(li.find('a'))
             category = re.findall('[A-Za-z\/?\s]+', key)[0].strip()
             inter[category] = {
@@ -43,8 +45,70 @@ def extract_inter(soup):
             if category == 'Drug Interactions':
                 for li in inter_page.find('ul', 'interactions interactions-label ddc-list-unstyled').find_all('li'):
                     inter[category]['content'].append(txt(li).replace('\t', ''))
-                for li in inter_page.find('ul', 'interactions ddc-list-unstyled').find_all('li'):
-                    inter[category]['inter_list'].append(txt(li).replace('\t', ''))
+                    
+                full_list_page = bs4.BeautifulSoup(requests.get(url(link[:-5] + '-index' + link[-5:])).content, 'lxml')
+                
+                if(full_list_page.find('ul', 'interactions ddc-list-unstyled') is not None):
+                    for li in full_list_page.find('ul', 'interactions ddc-list-unstyled').find_all('li','int_0'):
+                        link_comment = li.find('a')['href']
+                        comment_page = bs4.BeautifulSoup(requests.get(url(link_comment)).content, 'lxml')
+                        comment = str(comment_page.find('div', 'interactions-reference').find_all('p')[1]).strip().replace('\t', '').replace('\n', '')
+                        comment = re.sub(u"\\<.*?\\>", "", comment)
+                        inter[category]['inter_list'].append([0,txt(li).replace('\t', ''), comment])
+                            
+                    for li in full_list_page.find('ul', 'interactions ddc-list-unstyled').find_all('li','int_1'):
+                        link_comment = li.find('a')['href']
+                        comment_page = bs4.BeautifulSoup(requests.get(url(link_comment)).content, 'lxml')
+                        comment = str(comment_page.find('div', 'interactions-reference').find_all('p')[1]).strip().replace('\t', '').replace('\n', '')
+                        comment = re.sub(u"\\<.*?\\>", "", comment)
+                        inter[category]['inter_list'].append([1,txt(li).replace('\t', ''), comment])   
+                        
+                    for li in full_list_page.find('ul', 'interactions ddc-list-unstyled').find_all('li','int_2'):
+                        link_comment = li.find('a')['href']
+                        comment_page = bs4.BeautifulSoup(requests.get(url(link_comment)).content, 'lxml')
+                        comment = str(comment_page.find('div', 'interactions-reference').find_all('p')[1]).strip().replace('\t', '').replace('\n', '')
+                        comment = re.sub(u"\\<.*?\\>", "", comment)
+                        inter[category]['inter_list'].append([2,txt(li).replace('\t', ''), comment])
+                        
+                    for li in full_list_page.find('ul', 'interactions ddc-list-unstyled').find_all('li','int_3'):
+                        link_comment = li.find('a')['href']
+                        comment_page = bs4.BeautifulSoup(requests.get(url(link_comment)).content, 'lxml')
+                        comment = str(comment_page.find('div', 'interactions-reference').find_all('p')[1]).strip().replace('\t', '').replace('\n', '')
+                        comment = re.sub(u"\\<.*?\\>", "", comment)
+                        inter[category]['inter_list'].append([3,txt(li).replace('\t', ''), comment])
+                        
+                elif(full_list_page.find('ul', 'interactions column-list-3') is not None):
+                    for li in full_list_page.find('ul', 'interactions column-list-3').find_all('li','int_0'):
+                        link_comment = li.find('a')['href']
+                        comment_page = bs4.BeautifulSoup(requests.get(url(link_comment)).content, 'lxml')
+                        comment = str(comment_page.find('div', 'interactions-reference').find_all('p')[1]).strip().replace('\t', '').replace('\n', '')
+                        comment = re.sub(u"\\<.*?\\>", "", comment)
+                        inter[category]['inter_list'].append([0,txt(li).replace('\t', ''), comment])
+                        
+                    for li in full_list_page.find('ul', 'interactions column-list-3').find_all('li','int_1'):
+                        link_comment = li.find('a')['href']
+                        comment_page = bs4.BeautifulSoup(requests.get(url(link_comment)).content, 'lxml')
+                        comment = str(comment_page.find('div', 'interactions-reference').find_all('p')[1]).strip().replace('\t', '').replace('\n', '')
+                        comment = re.sub(u"\\<.*?\\>", "", comment)
+                        inter[category]['inter_list'].append([1,txt(li).replace('\t', ''), comment])
+                        
+                    for li in full_list_page.find('ul', 'interactions column-list-3').find_all('li','int_2'):
+                        link_comment = li.find('a')['href']
+                        comment_page = bs4.BeautifulSoup(requests.get(url(link_comment)).content, 'lxml')
+                        comment = str(comment_page.find('div', 'interactions-reference').find_all('p')[1]).strip().replace('\t', '').replace('\n', '')
+                        comment = re.sub(u"\\<.*?\\>", "", comment)
+                        inter[category]['inter_list'].append([2,txt(li).replace('\t', ''), comment])
+                        
+                    for li in full_list_page.find('ul', 'interactions column-list-3').find_all('li','int_3'):
+                        link_comment = li.find('a')['href']
+                        comment_page = bs4.BeautifulSoup(requests.get(url(link_comment)).content, 'lxml')
+                        comment = str(comment_page.find('div', 'interactions-reference').find_all('p')[1]).strip().replace('\t', '').replace('\n', '')
+                        comment = re.sub(u"\\<.*?\\>", "", comment)
+                        inter[category]['inter_list'].append([3,txt(li).replace('\t', ''), comment])
+                else:
+                    with open('error.txt','a+') as error:
+                        error.write(link + '\n')
+                
             else:
                 for div in inter_page.find_all('div', 'interactions-reference'):
                     interaction = {}
@@ -53,6 +117,8 @@ def extract_inter(soup):
                     interaction['sub_title'] = txt(div.div.p)
                     interaction['body'] = txt(div.find_all('p')[1])
                     inter[category]['content'].append(interaction)
+            if(inter[category]['inter_list'] == []):
+                print(link)
             return inter
     except AttributeError:
         return {}
@@ -260,6 +326,7 @@ while True:
                     'dose'      : tabs_ul.find('a', text='Dosage'),
                     'pro'       : tabs_ul.find('a', text='Professional'),
                     'inter'     : tabs_ul.find('a', text='Interactions'),
+                    'tips'      : tabs_ul.find('a', text='Tips')
                     #'reviews'   : soup.find('p', 'user-reviews-title').find('a')
                 }
                 #print(links)
@@ -298,6 +365,15 @@ while True:
                         content = extract_inter(soup)
                         json.dump(content, f, indent=4)
                 
+                # tips page
+                if links['tips'] is not None:
+                    r = requests.get(url(links['inter']['href']))
+                    soup = bs4.BeautifulSoup(r.content, 'lxml') 
+                    #print(soup)
+                    with open(f'data/{drug}/{drug}_tips.json', 'w') as f:
+                        content = extract_text(soup)
+                        json.dump(content, f, indent=4)
+                        
                 '''
                 # reviews 
                 if links['reviews'] is not None:
@@ -308,8 +384,8 @@ while True:
                         json.dump(content, f, indent=4)
                 '''
 
-            #with open('pickles.txt', 'w', encoding='utf-8') as f:
-                #f.write(last)
+            with open('pickles.txt', 'w', encoding='utf-8') as f:
+                f.write(last)
             # # time.sleep(2) # god mode off
     except (TimeoutError, ConnectionError):
             print('BOT KILL, CONNECTION SEVERED')
